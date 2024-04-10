@@ -38,17 +38,6 @@ local function displayFilteredList()
     end
     selected_vehicle, used = ImGui.ListBox("", selected_vehicle, vehicle_names, #filtered_vehicles)
 end
-local function RequestControl(entity, ticks)
-    local tick = 0
-    ticks = ticks or 50
-    local netID = NETWORK.NETWORK_GET_NETWORK_ID_FROM_ENTITY(entity)
-    NETWORK.SET_NETWORK_ID_CAN_MIGRATE(netID, true)
-    while not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) and tick < ticks do
-        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-        tick = tick + 1
-    end
-    return NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity), tick
-end
 vehicle_spawner:add_imgui(displayFilteredList)
 local ped = PLAYER.GET_PLAYER_PED(network.get_selected_player())
 local player_name = PLAYER.GET_PLAYER_NAME(network.get_selected_player())
@@ -75,15 +64,17 @@ vehicle_spawner:add_imgui(function()
             DECORATOR.DECOR_SET_INT(spawned_vehicle, "MPBitset", 0)
             local netID = NETWORK.VEH_TO_NET(spawned_vehicle)
             if NETWORK.NETWORK_GET_ENTITY_IS_NETWORKED(spawned_vehicle) then
+                NETWORK.SET_NETWORK_ID_CAN_MIGRATE(netID, true)
                 NETWORK.SET_NETWORK_ID_EXISTS_ON_ALL_MACHINES(netID, true)
             end
             VEHICLE.SET_VEHICLE_IS_STOLEN(spawned_vehicle, false)
             if spawnInside then
-                e, ticks = RequestControl(ped, 250)
-                if not e then
-                    return gui.show_message("Spawn Inside", "Failed to set the player inside the vehicle!\nMaybe they have protections enabled?")
+                local controlled = entities.take_control_of(ped, 350)
+                if not controlled then
+                    gui.show_message("Spawn Inside", "Failed to set the player inside the vehicle!\nMaybe they have protections enabled?")
+                else
+                    PED.SET_PED_INTO_VEHICLE(ped, spawned_vehicle, -1)
                 end
-                PED.SET_PED_INTO_VEHICLE(ped, spawned_vehicle, -1)
             end
             gui.show_message("Vehicle Spawner", "Spawned ''"..vehicle.name.."'' for [ "..player_name.." ]")
         end)

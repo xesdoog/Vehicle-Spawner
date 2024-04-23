@@ -90,6 +90,7 @@ vehicle_spawner:add_imgui(function()
 			end
 			spawned_vehicle = VEHICLE.CREATE_VEHICLE(vehicle.hash, plyrCoords.x + (plyrForwardX * 5), plyrCoords.y + (plyrForwardY * 5), plyrCoords.z, ENTITY.GET_ENTITY_HEADING(ped), true, false, false)
 			VEHICLE.SET_VEHICLE_IS_STOLEN(spawned_vehicle, false)
+			DECORATOR.DECOR_SET_INT(spawned_vehicle, "MPBitset", 0)
 			if spawnInside then
 				local controlled = entities.take_control_of(ped, 350)
 				if not controlled then

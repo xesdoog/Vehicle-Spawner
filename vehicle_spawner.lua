@@ -3,6 +3,7 @@
 local vehicle_spawner  = gui.get_tab("Vehicle Spawner")
 local vehicles         = require ("vehicleList")
 local is_typing        = false
+local online					 = false
 local ped              = nil
 local searchQuery      = ""
 local player_name      = ""
@@ -48,11 +49,13 @@ vehicle_spawner:add_imgui(function()
 	if ImGui.Button("    Spawn   ") then
 		script.run_in_fiber(function (script)
 			if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
-				ped = PLAYER.GET_PLAYER_PED(network.get_selected_player())
+				online = true
+				ped    = PLAYER.GET_PLAYER_PED(network.get_selected_player())
 			else
-				ped = self.get_ped()
+				online = false
+				ped    = self.get_ped()
 			end
-			if not NETWORK.NETWORK_IS_SESSION_ACTIVE() then
+			if not online then
 				local playerModel = ENTITY.GET_ENTITY_MODEL(ped)
 				if playerModel == 2602752943 then
 					player_name = "Franklin"
@@ -86,7 +89,6 @@ vehicle_spawner:add_imgui(function()
 				end
 			end
 			spawned_vehicle = VEHICLE.CREATE_VEHICLE(vehicle.hash, plyrCoords.x + (plyrForwardX * 5), plyrCoords.y + (plyrForwardY * 5), plyrCoords.z, ENTITY.GET_ENTITY_HEADING(ped), true, false, false)
-			DECORATOR.DECOR_SET_INT(spawned_vehicle, "MPBitset", 0)
 			VEHICLE.SET_VEHICLE_IS_STOLEN(spawned_vehicle, false)
 			if spawnInside then
 				local controlled = entities.take_control_of(ped, 350)
@@ -104,12 +106,12 @@ vehicle_spawner:add_imgui(function()
 	if ImGui.Button("   Delete  ") then
 		script.run_in_fiber(function(del)
 			if PED.IS_PED_SITTING_IN_ANY_VEHICLE(ped) then
-				pedVeh = PED.GET_VEHICLE_PED_IS_USING(ped)
-				local controlled = entities.take_control_of(pedVeh, 350)
-				if controlled then
-					ENTITY.SET_ENTITY_AS_MISSION_ENTITY(spawned_vehicle, true, true)
+				local pv = PED.GET_VEHICLE_PED_IS_USING(ped)
+				local pvCTRL = entities.take_control_of(pv, 350)
+				if pvCTRL then
+					ENTITY.SET_ENTITY_AS_MISSION_ENTITY(pv, true, true)
 					del:sleep(200)
-					VEHICLE.DELETE_VEHICLE(spawned_vehicle)
+					VEHICLE.DELETE_VEHICLE(pv)
 					gui.show_message("Vehicle Spawner",""..player_name.."'s vehicle has been yeeted.")
 				else
 					gui.show_error("Vehicle Spawner", "Failed to delete the vehicle! "..player_name.." probably has protections on.")

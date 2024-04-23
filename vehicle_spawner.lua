@@ -77,8 +77,8 @@ vehicle_spawner:add_imgui(function()
 			local plyrCoords   = ENTITY.GET_ENTITY_COORDS(ped, false)
 			local plyrForwardX = ENTITY.GET_ENTITY_FORWARD_X(ped)
 			local plyrForwardY = ENTITY.GET_ENTITY_FORWARD_Y(ped)
-			local vehicle  		 = filtered_vehicles[selected_vehicle + 1]
-			local counter  		 = 0
+			local vehicle  	   = filtered_vehicles[selected_vehicle + 1]
+			local counter  	   = 0
 			while not STREAMING.HAS_MODEL_LOADED(vehicle.hash) do
 				STREAMING.REQUEST_MODEL(vehicle.hash)
 				script:yield()

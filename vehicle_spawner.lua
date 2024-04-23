@@ -3,7 +3,7 @@
 local vehicle_spawner  = gui.get_tab("Vehicle Spawner")
 local vehicles         = require ("vehicleList")
 local is_typing        = false
-local online					 = false
+local online	       = false
 local ped              = nil
 local searchQuery      = ""
 local player_name      = ""

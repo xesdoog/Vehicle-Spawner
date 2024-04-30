@@ -3,13 +3,13 @@
 local vehicle_spawner  = gui.get_tab("Vehicle Spawner")
 local vehicles         = require ("vehicleList")
 local is_typing        = false
-local online		   = false
+local online	       = false
 local searchQuery      = ""
 local player_name      = ""
 local ped              = 0
 local selected_vehicle = 0
 local spawned_vehicle  = 0
-local playerIndex 	   = 0
+local playerIndex      = 0
 script.register_looped("disableInput", function()
 	if is_typing then
 		PAD.DISABLE_ALL_CONTROL_ACTIONS(0)

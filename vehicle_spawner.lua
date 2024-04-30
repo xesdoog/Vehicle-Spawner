@@ -3,12 +3,13 @@
 local vehicle_spawner  = gui.get_tab("Vehicle Spawner")
 local vehicles         = require ("vehicleList")
 local is_typing        = false
-local online	       = false
-local ped              = nil
+local online		   = false
 local searchQuery      = ""
 local player_name      = ""
+local ped              = 0
 local selected_vehicle = 0
 local spawned_vehicle  = 0
+local playerIndex 	   = 0
 script.register_looped("disableInput", function()
 	if is_typing then
 		PAD.DISABLE_ALL_CONTROL_ACTIONS(0)
@@ -25,7 +26,6 @@ vehicle_spawner:add_imgui(function()
 	end
     ImGui.PushItemWidth(270)
 end)
-local filtered_vehicles = {}
 local function updateFilteredVehicles()
 	filtered_vehicles = {}
 	for _, item in ipairs(vehicles) do
@@ -42,43 +42,68 @@ local function displayFilteredList()
 	end
 	selected_vehicle, used = ImGui.ListBox("", selected_vehicle, vehicle_names, #filtered_vehicles)
 end
+local function updatePlayerList()
+	local players 	= entities.get_all_peds_as_handles()
+	filteredPlayers = {}
+	for _, p in ipairs(players) do
+		if PED.IS_PED_A_PLAYER(p) then
+			if NETWORK.NETWORK_IS_PLAYER_ACTIVE(p) then
+				table.insert(filteredPlayers, p)
+			end
+		end
+	end
+end
+local function displayPlayerList()
+	updatePlayerList()
+	local playerNames = {}
+	for _, player in ipairs(filteredPlayers) do
+		playerName = PLAYER.GET_PLAYER_NAME(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(player))
+		table.insert(playerNames, playerName)
+	end
+	playerIndex, used = ImGui.Combo("##playerList", playerIndex, playerNames, #filteredPlayers)
+end
 vehicle_spawner:add_imgui(displayFilteredList)
 vehicle_spawner:add_separator()
 vehicle_spawner:add_imgui(function()
+	if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
+		online = true
+	else
+		online = false
+	end
+	if not online then
+		ped = self.get_ped()
+		local playerModel = ENTITY.GET_ENTITY_MODEL(ped)
+		if playerModel == 2602752943 then
+			player_name = "Franklin"
+		elseif playerModel == 225514697 then
+			player_name = "Michael"
+		elseif playerModel == 2608926626 then
+			player_name = "Trevor"
+		else
+			player_name = "Custom Character"
+		end
+	else
+		ImGui.Text("Select a Player To Spawn For:")
+		ImGui.PushItemWidth(250)
+		displayPlayerList()
+		ImGui.PopItemWidth()
+		local selectedPlayer = filteredPlayers[playerIndex + 1]
+		ped = selectedPlayer
+		local myPed = self.get_ped()
+		if ped == myPed then
+			player_name = "Your Online Character"
+		else
+			player_name = PLAYER.GET_PLAYER_NAME(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(ped))
+		end
+	end
 	spawnInside, used = ImGui.Checkbox("Spawn Inside", spawnInside, true)
 	if ImGui.Button("    Spawn   ") then
 		script.run_in_fiber(function (script)
-			if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
-				online = true
-				ped    = PLAYER.GET_PLAYER_PED(network.get_selected_player())
-			else
-				online = false
-				ped    = self.get_ped()
-			end
-			if not online then
-				local playerModel = ENTITY.GET_ENTITY_MODEL(ped)
-				if playerModel == 2602752943 then
-					player_name = "Franklin"
-				elseif playerModel == 225514697 then
-					player_name = "Michael"
-				elseif playerModel == 2608926626 then
-					player_name = "Trevor"
-				else
-					player_name = "Custom Character"
-				end
-			else
-				local myPed = self.get_ped()
-				if ped == myPed then
-					player_name = "Your Online Character"
-				else
-					player_name = PLAYER.GET_PLAYER_NAME(ped)
-				end
-			end
 			local plyrCoords   = ENTITY.GET_ENTITY_COORDS(ped, false)
 			local plyrForwardX = ENTITY.GET_ENTITY_FORWARD_X(ped)
 			local plyrForwardY = ENTITY.GET_ENTITY_FORWARD_Y(ped)
-			local vehicle  	   = filtered_vehicles[selected_vehicle + 1]
-			local counter  	   = 0
+			local vehicle  		 = filtered_vehicles[selected_vehicle + 1]
+			local counter  		 = 0
 			while not STREAMING.HAS_MODEL_LOADED(vehicle.hash) do
 				STREAMING.REQUEST_MODEL(vehicle.hash)
 				script:yield()

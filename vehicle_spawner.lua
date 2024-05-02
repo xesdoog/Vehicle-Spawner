@@ -2,8 +2,8 @@
 
 local vehicle_spawner  = gui.get_tab("Vehicle Spawner")
 local vehicles         = require ("vehicleList")
-local is_typing        = false
-local online	       = false
+local is_typing	     = false
+local online	     = false
 local searchQuery      = ""
 local player_name      = ""
 local ped              = 0
@@ -47,7 +47,7 @@ local function updatePlayerList()
 	filteredPlayers = {}
 	for _, p in ipairs(players) do
 		if PED.IS_PED_A_PLAYER(p) then
-			if NETWORK.NETWORK_IS_PLAYER_ACTIVE(p) then
+			if NETWORK.NETWORK_IS_PLAYER_ACTIVE(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)) then
 				table.insert(filteredPlayers, p)
 			end
 		end
